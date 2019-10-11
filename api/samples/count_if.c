@@ -13,6 +13,9 @@ static bb_counts counts_as_built;
 void *as_built_lock;
 static bb_counts counts_dynamic;
 void *count_lock;
+
+long base_address;
+
 static void
 event_exit(void);
 static dr_emit_flags_t
@@ -26,6 +29,7 @@ dr_client_main(client_id_t id, int argc, const char *argv[])
     char msg[512];
     snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nNumber of arguments : %d", argc);
     DISPLAY_STRING(msg);
+
     if (argc < 2){
         snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Insufficient arguments\n");
         DISPLAY_STRING(msg);
@@ -36,6 +40,18 @@ dr_client_main(client_id_t id, int argc, const char *argv[])
     snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Looking for address %s", address);
     DISPLAY_STRING(msg);
 
+    byte* base_address_array = dr_get_client_base(id);
+    base_address = (base_address_array[0]*10 + base_address_array[1]);
+    for (int i=0; i<32; i++){
+        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "%hhn", base_address_array[i]);
+        DISPLAY_STRING(msg);
+    }
+    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Base Address %x%x", base_address_array[0], base_address_array[1]);
+    DISPLAY_STRING(msg);
+    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Base Address %hhn", base_address_array);
+    DISPLAY_STRING(msg);
+    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Base Address %lx", base_address);
+    DISPLAY_STRING(msg);
 
     /* register events */
     dr_register_exit_event(event_exit);
@@ -101,16 +117,23 @@ event_basic_block(void *drcontext, void *tag, instrlist_t *bb,
     uint num_instructions = 0;
     instr_t *instr;
     const char *opcode;
+//    app_pc pc;
     char msg[512];
+
+
 
     /* count the number of instructions in this block */
     for (instr = instrlist_first(bb); instr != NULL; instr = instr_get_next(instr)) {
         opcode = decode_opcode_name(instr_get_opcode(instr));
-        if (strcmp(opcode, "jnz") == 0)
+//        pc = instr_get_app_pc(instr);
+//        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction Address: %lx", (ptr_int_t)pc);
+//        DISPLAY_STRING(msg);
+        if (strcmp(opcode, "yufyuf") == 0){
+            snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction: %s", opcode);
+            DISPLAY_STRING(msg);
             num_instructions++;
+        }
 
-        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction: %s", opcode);
-        DISPLAY_STRING(msg);
     }
     /* update the as-built counts */
     dr_mutex_lock(as_built_lock);
