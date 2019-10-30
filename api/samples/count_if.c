@@ -15,7 +15,7 @@ static bb_counts counts_as_built;
 void *as_built_lock;
 static bb_counts counts_dynamic;
 void *count_lock;
-long base_address;
+byte* base_address;
 
 static void event_exit(void);
 static dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb, bool for_trace, bool translating);
@@ -36,7 +36,9 @@ DR_EXPORT void dr_client_main(client_id_t id, int argc, const char *argv[]) {
     snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Looking for address %s", address);
     DISPLAY_STRING(msg);
 
-//    byte* base_address_array = dr_get_client_base(id);
+    base_address= dr_get_client_base(id);
+//    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Base Address %x", base_address_array);
+//    DISPLAY_STRING(msg);
 //    base_address = (base_address_array[0]*10 + base_address_array[1]);
 //    for (int i=0; i<32; i++){
 //        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "%hhn", base_address_array[i]);
@@ -44,8 +46,7 @@ DR_EXPORT void dr_client_main(client_id_t id, int argc, const char *argv[]) {
 //    }
 //    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Base Address %x%x", base_address_array[0], base_address_array[1]);
 //    DISPLAY_STRING(msg);
-//    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Base Address %hhn", base_address_array);
-//    DISPLAY_STRING(msg);
+
 //    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Base Address %lx", base_address);
 //    DISPLAY_STRING(msg);
 
@@ -109,41 +110,61 @@ static void clean_call(uint instruction_count)
 
 static dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb, bool for_trace, bool translating) {
     uint num_instructions = 0, count_block = 0;
-    instr_t *instr, *instr_it;
+    instr_t *instr;
+//    instr_t  *instr_it;
     const char *opcode;
     app_pc pc;
     char msg[512];
-    pc = dr_fragment_app_pc(tag);
+
 
     /* count the number of instructions in this block */
     for (instr = instrlist_first(bb); instr != NULL; instr = instr_get_next(instr)) {
         opcode = decode_opcode_name(instr_get_opcode(instr));
+        pc = dr_fragment_app_pc(tag);
+//        dr_pred_type_t pred_const = instr_get_predicate(instr);
+//        ssize_t diff = (byte *) pc - base_address;
+
+        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction: %s - Address %lx", opcode, (ptr_uint_t)pc);
+        DISPLAY_STRING(msg);
+//        byte instruction_bytes = instr_get_raw_byte(instr,0);
+
+        int length = instr_length(drcontext, instr);
+        int index = 0;
+//        instr_allocate_raw_bits(drcontext, instr, length);
+        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction(%d):", length);
+        DISPLAY_STRING(msg);
+        for (int i=0; i < length; i++){
+            snprintf(msg + i*3, sizeof(msg)/sizeof(msg[0]) - index, "%02x ", instr_get_raw_byte(instr,i));
+        }
+        DISPLAY_STRING(msg);
+
 //        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction Address: %lx", (ptr_int_t)pc);
 //        DISPLAY_STRING(msg);
-        if (instr_is_cbr(instr)){
-            snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction: %s", opcode);
-            DISPLAY_STRING(msg);
-            num_instructions++;
-            count_block = 1;
-            int count = 4;
-            for (instr_it = instr_get_prev_app(instr); instr_it != NULL; instr_it = instr_get_prev_app(instr_it)) {
-                opcode = decode_opcode_name(instr_get_opcode(instr_it));
-                snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nPrev Instruction: %s", opcode);
-                DISPLAY_STRING(msg);
-
-                if (count == 0)
-                    break;
-                else
-                    count--;
-            }
-
-
-//            instr = instr_get_prev(instr);
-//            opcode = decode_opcode_name(instr_get_opcode(instr));
-//            snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nPrev Instruction: %s", opcode);
-//            DISPLAY_STRING(msg);
-
-        }
+//        if (instr_is_cbr(instr)){
+//
+//            snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction: %s", opcode);
+////            DISPLAY_STRING(msg);
+//            num_instructions++;
+//            count_block = 1;
+//            int count = 4;
+//            for (instr_it = instr_get_prev_app(instr); instr_it != NULL; instr_it = instr_get_prev_app(instr_it)) {
+//                opcode = decode_opcode_name(instr_get_opcode(instr_it));
+//                snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nPrev Instruction: %s", opcode);
+////                DISPLAY_STRING(msg);
+//
+//                if (count == 0)
+//                    break;
+//                else
+//                    count--;
+//            }
+//
+//
+////            instr = instr_get_prev(instr);
+////            opcode = decode_opcode_name(instr_get_opcode(instr));
+////            snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nPrev Instruction: %s", opcode);
+////            DISPLAY_STRING(msg);
+//
+//        }
 
     }
 
