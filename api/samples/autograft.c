@@ -110,24 +110,23 @@ static void clean_call(uint instruction_count)
 
 static dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb, bool for_trace, bool translating) {
     uint num_instructions = 0, count_block = 0;
-    instr_t *instr;
+    instr_t *instr, *first_instr;
 //    instr_t  *instr_it;
     const char *opcode;
-    app_pc pc;
+    app_pc base_pc;
     char msg[512];
 
+    first_instr = instrlist_first(bb);
+    base_pc = instr_get_app_pc(first_instr);
 
     /* count the number of instructions in this block */
     for (instr = instrlist_first(bb); instr != NULL; instr = instr_get_next(instr)) {
         opcode = decode_opcode_name(instr_get_opcode(instr));
-        pc = dr_fragment_app_pc(tag);
-//        dr_pred_type_t pred_const = instr_get_predicate(instr);
-//        ssize_t diff = (byte *) pc - base_address;
-
-        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction: %s - Address %lx", opcode, (ptr_uint_t)pc);
+        app_pc instr_addr = instr_get_app_pc(instr);
+        size_t offset = (ptr_uint_t)instr_addr - (ptr_uint_t)base_address;
+        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction: %s - Address %lx - Distance %lx", opcode, (ptr_uint_t)(instr_addr), offset);
         DISPLAY_STRING(msg);
 //        byte instruction_bytes = instr_get_raw_byte(instr,0);
-
         int length = instr_length(drcontext, instr);
         int index = 0;
 //        instr_allocate_raw_bits(drcontext, instr, length);
