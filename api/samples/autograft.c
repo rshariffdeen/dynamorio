@@ -99,6 +99,25 @@ static void event_exit(void) {
 //    return false;
 //}
 
+static void print_instruction(){
+    opcode = decode_opcode_name(instr_get_opcode(instr));
+    app_pc instr_addr = instr_get_app_pc(instr);
+//    size_t offset = (ptr_uint_t)instr_addr - (ptr_uint_t)base_address;
+    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction: %s - Address %lx", opcode, (ptr_uint_t)(instr_addr));
+    DISPLAY_STRING(msg);
+//        byte instruction_bytes = instr_get_raw_byte(instr,0);
+    int length = instr_length(drcontext, instr);
+    int index = 0;
+//        instr_allocate_raw_bits(drcontext, instr, length);
+    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction(%d):", length);
+    DISPLAY_STRING(msg);
+    for (int i=0; i < length; i++){
+        snprintf(msg + i*3, sizeof(msg)/sizeof(msg[0]) - index, "%02x ", instr_get_raw_byte(instr,i));
+    }
+    DISPLAY_STRING(msg);
+
+}
+
 
 static void clean_call(uint instruction_count)
 {
