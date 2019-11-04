@@ -87,6 +87,8 @@ typedef enum { CBR_NEITHER = 0x00, CBR_TAKEN = 0x01, CBR_NOT_TAKEN = 0x10 } cbr_
 typedef struct _elem_t {
     struct _elem_t *next;
     cbr_state_t state;
+    int count_taken;
+    int count_not;
     app_pc addr;
 } elem_t;
 
@@ -108,7 +110,8 @@ new_elem(app_pc addr, cbr_state_t state)
     elem->next = NULL;
     elem->addr = addr;
     elem->state = state;
-
+    elem->count_not = 0;
+    elem->count_taken = 0;
     return elem;
 }
 
@@ -236,7 +239,7 @@ at_taken(app_pc src, app_pc targ)
         sizeof(mcontext),
         DR_MC_ALL,
     };
-    void *drcontext = dr_get_current_drcontext();
+//    void *drcontext = dr_get_current_drcontext();
 
     /*
      * Record the fact that we've seen the taken case.
@@ -244,6 +247,7 @@ at_taken(app_pc src, app_pc targ)
     elem_t *elem = lookup(global_table, src);
     ASSERT(elem != NULL);
     elem->state |= CBR_TAKEN;
+    elem->count_taken++;
 
     /* Remove the bb from the cache so it will be re-built the next
      * time it executes.
@@ -251,10 +255,10 @@ at_taken(app_pc src, app_pc targ)
     /* Since the flush will remove the fragment we're already in,
      * redirect execution to the target address.
      */
-    dr_flush_region(src, 1);
-    dr_get_mcontext(drcontext, &mcontext);
-    mcontext.pc = targ;
-    dr_redirect_execution(&mcontext);
+//    dr_flush_region(src, 1);
+//    dr_get_mcontext(drcontext, &mcontext);
+//    mcontext.pc = targ;
+//    dr_redirect_execution(&mcontext);
 }
 
 /* Clean call for the 'not taken' case */
@@ -265,7 +269,7 @@ at_not_taken(app_pc src, app_pc fall)
         sizeof(mcontext),
         DR_MC_ALL,
     };
-    void *drcontext = dr_get_current_drcontext();
+//    void *drcontext = dr_get_current_drcontext();
 
     /*
      * Record the fact that we've seen the not_taken case.
@@ -273,17 +277,17 @@ at_not_taken(app_pc src, app_pc fall)
     elem_t *elem = lookup(global_table, src);
     ASSERT(elem != NULL);
     elem->state |= CBR_NOT_TAKEN;
-
+    elem->count_not++;
     /* Remove the bb from the cache so it will be re-built the next
      * time it executes.
      */
     /* Since the flush will remove the fragment we're already in,
      * redirect execution to the fallthrough address.
      */
-    dr_flush_region(src, 1);
-    dr_get_mcontext(drcontext, &mcontext);
-    mcontext.pc = fall;
-    dr_redirect_execution(&mcontext);
+//    dr_flush_region(src, 1);
+//    dr_get_mcontext(drcontext, &mcontext);
+//    mcontext.pc = fall;
+//    dr_redirect_execution(&mcontext);
 }
 
 static dr_emit_flags_t
@@ -405,12 +409,12 @@ dr_exit(void)
                 cbr_state_t state = iter->state;
 
                 if (state == CBR_TAKEN) {
-                    dr_printf("" PFX ": taken\n", iter->addr);
+                    dr_printf("" PFX ": taken : %d\n", iter->addr, iter->count_taken);
                 } else if (state == CBR_NOT_TAKEN) {
-                    dr_printf("" PFX ": not taken\n", iter->addr);
+                    dr_printf("" PFX ": not taken: %d\n", iter->addr, iter->count_not);
                 } else {
                     ASSERT(state == (CBR_TAKEN | CBR_NOT_TAKEN));
-                    dr_printf("" PFX ": both\n", iter->addr);
+                    dr_printf("" PFX ": both: %d - %d\n", iter->addr, iter->count_not, iter->count_taken);
                 }
             }
         }
