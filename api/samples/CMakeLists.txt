@@ -207,7 +207,7 @@ configure_DynamoRIO_global(OFF ON)
 
 add_sample_client(bbbuf       "bbbuf.c"         "drmgr;drreg;drx")
 add_sample_client(bbcount     "bbcount.c"       "drmgr;drreg;drx")
-add_sample_client(autograft       "autograft.c"    "drcontainers;drmgr;drreg;drx")
+add_sample_client(extract       "extract.c"    "drcontainers;drmgr;drreg;drx")
 add_sample_client(bbsize      "bbsize.c"        "drmgr")
 add_sample_client(div         "div.c"           "drmgr")
 add_sample_client(empty       "empty.c"         "")

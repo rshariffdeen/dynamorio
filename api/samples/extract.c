@@ -17,6 +17,7 @@ static bb_counts counts_dynamic;
 void *count_lock;
 byte* base_address;
 const char *look_address;
+static int count;
 
 static void event_exit(void);
 static dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb, bool for_trace, bool translating);
@@ -27,13 +28,14 @@ DR_EXPORT void dr_client_main(client_id_t id, int argc, const char *argv[]) {
     snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nNumber of arguments : %d", argc);
     DISPLAY_STRING(msg);
 
-    if (argc < 2){
+    if (argc < 3){
         snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Insufficient arguments\n");
         DISPLAY_STRING(msg);
         return;
     }
 
     look_address = argv[1];
+    count = atoi(argv[2]);
     snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Looking for address %s", look_address);
     DISPLAY_STRING(msg);
 
@@ -129,14 +131,29 @@ static void clean_call(uint instruction_count)
 
 static dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb, bool for_trace, bool translating) {
     uint num_instructions = 0, count_block = 0;
-    instr_t *instr;
-
+    instr_t *instr, *instr_it;
+    char msg[512];
     /* count the number of instructions in this block */
     for (instr = instrlist_first(bb); instr != NULL; instr = instr_get_next(instr)) {
 
         app_pc instr_addr = instr_get_app_pc(instr);
         if ((ptr_int_t)instr_addr == strtol(look_address, NULL, 16) ){
             print_instruction(instr, drcontext);
+
+            app_pc fall = (app_pc)decode_next_pc(drcontext, (byte *)instr_addr);
+            app_pc target = instr_get_branch_target_pc(instr);
+//            app_pc taken = instr_get_app_pc(instr_get_next(instr));
+            snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\n[Instruction-Info]: %lx %lx", (ptr_uint_t)(fall), (ptr_uint_t)(target));
+            DISPLAY_STRING(msg);
+
+            for (instr_it = instr_get_prev_app(instr); instr_it != NULL; instr_it = instr_get_prev_app(instr_it)) {
+                print_instruction(instr_it, drcontext);
+                if (count == 0)
+                    break;
+                else
+                    count--;
+            }
+
         }
 //        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nInstruction Address: %lx", (ptr_int_t)pc);
 //        DISPLAY_STRING(msg);
@@ -147,16 +164,7 @@ static dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t
 //            num_instructions++;
 //            count_block = 1;
 //            int count = 4;
-//            for (instr_it = instr_get_prev_app(instr); instr_it != NULL; instr_it = instr_get_prev_app(instr_it)) {
-//                opcode = decode_opcode_name(instr_get_opcode(instr_it));
-//                snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nPrev Instruction: %s", opcode);
-////                DISPLAY_STRING(msg);
-//
-//                if (count == 0)
-//                    break;
-//                else
-//                    count--;
-//            }
+
 //
 //
 ////            instr = instr_get_prev(instr);
