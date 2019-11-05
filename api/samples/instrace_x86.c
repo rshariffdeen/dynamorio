@@ -217,7 +217,7 @@ event_thread_init(void *drcontext)
                           DR_FILE_ALLOW_LARGE);
 #ifdef OUTPUT_TEXT
     data->logf = log_stream_from_file(data->log);
-    fprintf(STDERR, "Format: <instr address>,<opcode>\n");
+    fprintf(stderr, "Format: <instr address>,<opcode>\n");
 #endif
 }
 
@@ -273,7 +273,7 @@ instrace(void *drcontext)
      */
     for (i = 0; i < num_refs; i++) {
         /* We use PIFX to avoid leading zeroes and shrink the resulting file. */
-        fprintf(STDERR, PIFX ",%s\n", (ptr_uint_t)ins_ref->pc,
+        fprintf(stderr, PIFX ",%s\n", (ptr_uint_t)ins_ref->pc,
                 decode_opcode_name(ins_ref->opcode));
         ++ins_ref;
     }
