@@ -321,10 +321,12 @@ event_app_instruction(void *drcontext, void *tag, instrlist_t *bb, instr_t *inst
 
     if (elem == NULL) {
         state = CBR_NEITHER;
-        insert(global_table, src, CBR_NEITHER,instr_get_raw_byte(instr,0));
+        int op_code = instr_get_raw_byte(instr,0);
+        if (op_code == 15)
+            op_code = instr_get_raw_byte(instr,1);
+        insert(global_table, src, CBR_NEITHER,op_code);
     } else {
         state = elem->state;
-        elem->op_code = instr_get_raw_byte(instr,0);
     }
 
 
