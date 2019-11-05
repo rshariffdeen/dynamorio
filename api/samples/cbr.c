@@ -89,6 +89,7 @@ typedef struct _elem_t {
     cbr_state_t state;
     int count_taken;
     int count_not;
+    int op_code;
     app_pc addr;
 } elem_t;
 
@@ -112,6 +113,7 @@ new_elem(app_pc addr, cbr_state_t state)
     elem->state = state;
     elem->count_not = 0;
     elem->count_taken = 0;
+    elem->op_code = 0;
     return elem;
 }
 
@@ -213,10 +215,10 @@ lookup(hash_table_t table, app_pc addr)
 }
 
 void
-insert(hash_table_t table, app_pc addr, cbr_state_t state)
+insert(hash_table_t table, app_pc addr, cbr_state_t state, int op_code)
 {
     elem_t *elem = new_elem(addr, state);
-
+    elem->op_code = op_code;
     uint index = hash_func(addr);
     list_t *list = table[index];
     if (list == NULL) {
@@ -278,6 +280,7 @@ at_not_taken(app_pc src, app_pc fall)
     ASSERT(elem != NULL);
     elem->state |= CBR_NOT_TAKEN;
     elem->count_not++;
+
     /* Remove the bb from the cache so it will be re-built the next
      * time it executes.
      */
@@ -318,10 +321,13 @@ event_app_instruction(void *drcontext, void *tag, instrlist_t *bb, instr_t *inst
 
     if (elem == NULL) {
         state = CBR_NEITHER;
-        insert(global_table, src, CBR_NEITHER);
+        insert(global_table, src, CBR_NEITHER,instr_get_opcode(instr));
     } else {
         state = elem->state;
+        elem->op_code = instr_get_opcode(instr);
     }
+
+
 
     insert_taken = (state & CBR_TAKEN) == 0;
     insert_not_taken = (state & CBR_NOT_TAKEN) == 0;
@@ -409,12 +415,12 @@ dr_exit(void)
                 cbr_state_t state = iter->state;
 
                 if (state == CBR_TAKEN) {
-                    dr_printf("" PFX ": taken : %d\n", iter->addr, iter->count_taken);
+                    dr_printf("" PFX ": %d : taken : %d\n", iter->addr,  iter->op_code, iter->count_taken);
                 } else if (state == CBR_NOT_TAKEN) {
-                    dr_printf("" PFX ": not taken: %d\n", iter->addr, iter->count_not);
+                    dr_printf("" PFX ": %d : not taken: %d\n",iter->addr,  iter->op_code, iter->count_not);
                 } else {
                     ASSERT(state == (CBR_TAKEN | CBR_NOT_TAKEN));
-                    dr_printf("" PFX ": both: %d - %d\n", iter->addr, iter->count_not, iter->count_taken);
+                    dr_printf("" PFX ": %d : both: %d - %d\n", iter->addr, iter->op_code, iter->count_not, iter->count_taken);
                 }
             }
         }
