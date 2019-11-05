@@ -321,10 +321,10 @@ event_app_instruction(void *drcontext, void *tag, instrlist_t *bb, instr_t *inst
 
     if (elem == NULL) {
         state = CBR_NEITHER;
-        insert(global_table, src, CBR_NEITHER,instr_get_opcode(instr));
+        insert(global_table, src, CBR_NEITHER,instr_get_raw_byte(instr,0));
     } else {
         state = elem->state;
-        elem->op_code = instr_get_opcode(instr);
+        elem->op_code = instr_get_raw_byte(instr,0);
     }
 
 
