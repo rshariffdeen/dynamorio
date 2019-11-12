@@ -17,16 +17,13 @@ static bb_counts counts_dynamic;
 void *count_lock;
 byte* base_address;
 const char *look_address;
-static int count;
+
 
 static void event_exit(void);
 static dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb, bool for_trace, bool translating);
 static void clean_call(uint instruction_count);
 
 DR_EXPORT void dr_client_main(client_id_t id, int argc, const char *argv[]) {
-    char msg[512];
-
-
     base_address= dr_get_client_base(id);
 
     /* register events */
