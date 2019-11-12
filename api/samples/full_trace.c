@@ -25,19 +25,7 @@ static void clean_call(uint instruction_count);
 
 DR_EXPORT void dr_client_main(client_id_t id, int argc, const char *argv[]) {
     char msg[512];
-    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "\nNumber of arguments : %d", argc);
-    DISPLAY_STRING(msg);
 
-    if (argc < 3){
-        snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Insufficient arguments\n");
-        DISPLAY_STRING(msg);
-        return;
-    }
-
-    look_address = argv[1];
-    count = atoi(argv[2]);
-    snprintf(msg, sizeof(msg)/sizeof(msg[0]), "Looking for address %s", look_address);
-    DISPLAY_STRING(msg);
 
     base_address= dr_get_client_base(id);
 
@@ -105,8 +93,8 @@ static void clean_call(uint instruction_count)
 
 static dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb, bool for_trace, bool translating) {
     uint num_instructions = 0, count_block = 0;
-    instr_t *instr, *instr_it;
-    char msg[512];
+    instr_t *instr;
+
     /* count the number of instructions in this block */
     for (instr = instrlist_first(bb); instr != NULL; instr = instr_get_next(instr)) {
         print_instruction(instr, drcontext);
